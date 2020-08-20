@@ -28,18 +28,18 @@
 #    As one block is completed it is then used as the starter block for the next 3 blocks of its size.
 
 
-def hilbert_curve(start_point=(0,0)):
+def hilbert_curve(start_point=(0, 0), step_size=1):
     """Generator function that returns hilbert curve coordinates infinitely"""
     position = start_point
     _shape = shapes_gen()
-    shape = 1
+    shape = next(_shape) # setup shape 0 so it starts correctly. else it starts with 1,1 and is off in the rest of the calculations.
     while True:
-        for movement in move(shape):
+        for movement in move(shape, step_size):
             position = cmb(position, movement)
             yield position
         previous_shape = shape
         shape = next(_shape)
-        position = cmb(position, next_start(previous_shape, shape))
+        position = cmb(position, next_start(previous_shape, shape, step_size))
 
 
 def four_from_one_gen(shape):
@@ -71,29 +71,33 @@ def shapes_gen():
         position += 1
 
 
-def next_start(previous_shape, next_shape):
+def next_start(previous_shape, next_shape, step_size):
     """Function to get the position translation for the next block"""
-    grid = {1: {1: (0, 1), 2: (0, 1), 3: (-1, 0), 4: (-1, 0)},
+    grid = {0: {1: (0, 0), 2: (0, 0), 3: (0, 0), 4: (0, 0)},
+            1: {1: (0, 1), 2: (0, 1), 3: (-1, 0), 4: (-1, 0)},
             2: {1: (1, 0), 2: (1, 0), 3: (0, -1), 4: (0, -1)},
             3: {1: (1, 0), 2: (1, 0), 3: (0, -1), 4: (0, -1)},
             4: {1: (0, 1), 2: (0, 1), 3: (-1, 0), 4: (-1, 0)}}
-    return grid[previous_shape][next_shape]
+    return calc_step(grid[previous_shape][next_shape], step_size)
 
 
-def move(shape):
+def move(shape, step_size):
     """Finite generator to get the translation coordinates for each block type"""
-    moves = {1: [(0, 0), (1, 0), (0, 1), (-1,  0)],
+    moves = {0: [(0, 0)],
+             1: [(0, 0), (1, 0), (0, 1), (-1,  0)],
              2: [(0, 0), (0, 1), (1, 0), (0, -1)],
              3: [(0, 0), (-1, 0), (0, -1), (1,  0)],
              4: [(0, 0), (0, -1), (-1, 0), (0, 1)]}
     for a in moves[shape]:
-        yield a
+        yield calc_step(a, step_size)
 
 
 def cmb(start, translation):
     """Function to simplify position translation returning the new position"""
     return (start[0] + translation[0], start[1] + translation[1])
 
+def calc_step(point, step):
+    return (point[0]*step, point[1]*step)
 
 if __name__ == "__main__":
     x = 0
